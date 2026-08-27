@@ -7,3 +7,8 @@ providers:
     auto_stop_interval_in_minutes: 5
     auto_archive_interval_in_minutes: 60
     auto_delete_interval_in_minutes: 7200
+  - type: modal
+    app_name: trueforge
+    exec_timeout_ms: 60000
+    sandbox_timeout_ms: 3600000
+    idle_timeout_ms: 300000
