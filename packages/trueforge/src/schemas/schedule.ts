@@ -1,5 +1,5 @@
 import { z } from '@hono/zod-openapi';
-import { NameSchema } from './common';
+import { AgentNameSchema, NameSchema } from './common';
 
 /**
  * Minimum gap between two triggers of one schedule.
@@ -91,7 +91,7 @@ export const ScheduleManifestSchema = ScheduleManifestObjectSchema.openapi('Sche
 export const ScheduleSchema = z
   .object({
     id: z.string(),
-    agent_name: NameSchema,
+    agent_name: AgentNameSchema,
     name: NameSchema,
     manifest: ScheduleManifestSchema,
     created_by: z.string(),
@@ -103,7 +103,7 @@ export const ScheduleSchema = z
 
 export const CreateScheduleRequestSchema = z
   .object({
-    agent_name: NameSchema,
+    agent_name: AgentNameSchema,
     name: NameSchema,
     manifest: ScheduleManifestSchema,
   })

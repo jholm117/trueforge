@@ -155,6 +155,12 @@ describe('agents router', () => {
     const badName = await router.request('/', jsonInit('POST', { ...writeBody, name: 'Not A Name' }));
     expect(badName.status).toBe(400);
 
+    const dotted = await router.request('/', jsonInit('POST', { ...writeBody, name: 'my.agent' }));
+    expect(dotted.status).toBe(400);
+
+    const underscored = await router.request('/', jsonInit('POST', { ...writeBody, name: 'my_agent' }));
+    expect(underscored.status).toBe(400);
+
     const unknownModel = await router.request(
       '/',
       jsonInit('POST', {

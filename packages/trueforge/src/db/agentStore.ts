@@ -5,12 +5,12 @@
  * Implementations: PostgresAgentStore and SqliteAgentStore.
  */
 import { AgentSpecSchema, type AgentSpec } from '@truefoundry/trueforge-core/agent-session';
-import type { ResourceName } from '../schemas/common';
+import type { AgentName } from '../schemas/common';
 
 export interface AgentRecord {
   id: string;
   tenant_id: string;
-  name: ResourceName;
+  name: AgentName;
   manifest: AgentSpec;
   /** ISO-8601 UTC instant. */
   created_at: string;
@@ -31,7 +31,7 @@ export type GetAgentInput = { tenant_id: string } & ({ id: string } | { name: st
 
 export interface CreateAgentInput {
   tenant_id: string;
-  name: ResourceName;
+  name: AgentName;
   manifest: AgentSpec;
 }
 

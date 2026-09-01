@@ -3,7 +3,7 @@
  * Handlers are registered in apis/schedules.ts.
  */
 import { createRoute, z } from '@hono/zod-openapi';
-import { NameSchema } from '../schemas/common';
+import { AgentNameSchema } from '../schemas/common';
 import { RequestErrorResponseSchema } from '../schemas/errors';
 import {
   CreateScheduleRequestSchema,
@@ -21,7 +21,7 @@ export const ScheduleIdParamsSchema = z.object({
 
 export const ListSchedulesQuerySchema = z
   .object({
-    agent_name: NameSchema.optional(),
+    agent_name: AgentNameSchema.optional(),
   })
   .openapi('ListSchedulesQuery');
 

@@ -4,12 +4,12 @@
  */
 import { z } from '@hono/zod-openapi';
 import { AgentSpecSchema } from '@truefoundry/trueforge-core/agent-session';
-import { NameSchema } from './common';
+import { AgentNameSchema } from './common';
 
 /** Create body: unique immutable `name` plus manifest. `id` is never client-supplied. */
 export const CreateAgentRequestSchema = z
   .object({
-    name: NameSchema,
+    name: AgentNameSchema,
     manifest: AgentSpecSchema,
   })
   .strict()
@@ -27,7 +27,7 @@ export const UpdateAgentRequestSchema = z
 export const AgentSchema = z
   .object({
     id: z.string().min(1).describe('Immutable server-generated agent identifier.'),
-    name: NameSchema,
+    name: AgentNameSchema,
     manifest: AgentSpecSchema,
   })
   .strict()
