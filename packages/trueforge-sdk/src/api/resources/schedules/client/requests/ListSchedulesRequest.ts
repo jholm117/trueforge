@@ -7,5 +7,5 @@ import type * as TrueForge from "../../../../index.js";
  *     {}
  */
 export interface ListSchedulesRequest {
-    agentName?: TrueForge.ResourceName;
+    agentName?: TrueForge.AgentName;
 }

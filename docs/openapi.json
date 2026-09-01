@@ -35,7 +35,7 @@
             "$ref": "#/components/schemas/AgentSpec"
           },
           "name": {
-            "$ref": "#/components/schemas/ResourceName"
+            "$ref": "#/components/schemas/AgentName"
           }
         },
         "required": [
@@ -140,6 +140,12 @@
           "input"
         ],
         "type": "object"
+      },
+      "AgentName": {
+        "maxLength": 64,
+        "minLength": 2,
+        "pattern": "^[a-z][a-z0-9-]{0,62}[a-z0-9]$",
+        "type": "string"
       },
       "AgentParent": {
         "properties": {
@@ -959,7 +965,7 @@
             "$ref": "#/components/schemas/AgentSpec"
           },
           "name": {
-            "$ref": "#/components/schemas/ResourceName"
+            "$ref": "#/components/schemas/AgentName"
           }
         },
         "required": [
@@ -996,7 +1002,7 @@
         "additionalProperties": false,
         "properties": {
           "agent_name": {
-            "$ref": "#/components/schemas/ResourceName"
+            "$ref": "#/components/schemas/AgentName"
           },
           "manifest": {
             "$ref": "#/components/schemas/ScheduleManifest"
@@ -3012,7 +3018,7 @@
         "additionalProperties": false,
         "properties": {
           "agent_name": {
-            "$ref": "#/components/schemas/ResourceName"
+            "$ref": "#/components/schemas/AgentName"
           },
           "created_at": {
             "format": "date-time",
@@ -3221,7 +3227,7 @@
         "additionalProperties": false,
         "properties": {
           "name": {
-            "$ref": "#/components/schemas/ResourceName"
+            "$ref": "#/components/schemas/AgentName"
           }
         },
         "required": [
@@ -5785,7 +5791,7 @@
             "name": "agent_name",
             "required": false,
             "schema": {
-              "$ref": "#/components/schemas/ResourceName"
+              "$ref": "#/components/schemas/AgentName"
             }
           }
         ],
