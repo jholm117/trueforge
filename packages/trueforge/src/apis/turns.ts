@@ -129,8 +129,6 @@ export type BeginTurnExecutionDeps = Pick<
 > & {
   modelProviderStore: IModelProviderStore;
   mcpServerStore: IMcpServerStore;
-  /** Caller TF token for gateway MCP invoke; omitted for scheduler / no-request paths. */
-  accessToken?: string;
 };
 
 /**
@@ -375,8 +373,10 @@ export async function beginTurnExecution(params: {
   previous_turn_id: string | undefined;
   userRef: string;
   deps: BeginTurnExecutionDeps;
+  /** Caller TF token for gateway MCP invoke; omitted for scheduler / no-request paths. */
+  accessToken?: string;
 }): Promise<{ turn: TurnHandle; drainInput: TurnEventDrainInput }> {
-  const { session, input, previous_turn_id: previousTurnId, userRef, deps } = params;
+  const { session, input, previous_turn_id: previousTurnId, userRef, deps, accessToken } = params;
   const sessionId = session.session_id;
 
   const abortController = new AbortController();
@@ -391,7 +391,7 @@ export async function beginTurnExecution(params: {
     signal: abortController.signal,
     userRef,
     sessionId,
-    ...(deps.accessToken !== undefined ? { accessToken: deps.accessToken } : {}),
+    ...(accessToken !== undefined ? { accessToken } : {}),
   });
 
   // First turn only: derive the title from the first user message. The store
@@ -447,6 +447,7 @@ export async function startTurnInProcess(params: {
   previous_turn_id: string | undefined;
   userRef: string;
   deps: BeginTurnExecutionDeps;
+  accessToken?: string;
 }): Promise<TurnHandle> {
   const { turn, drainInput } = await beginTurnExecution(params);
 
@@ -683,8 +684,8 @@ export function createTurnsRouter(deps: TurnsRouterDeps) {
         ...deps,
         modelProviderStore: deps.resolveModelProviderStore(c),
         mcpServerStore: deps.resolveMcpServerStore(c),
-        ...(accessToken !== undefined ? { accessToken } : {}),
       },
+      ...(accessToken !== undefined ? { accessToken } : {}),
     };
 
     try {
