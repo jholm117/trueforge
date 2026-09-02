@@ -2,6 +2,7 @@ import { Kysely, PostgresDialect } from 'kysely';
 import pg, { Pool } from 'pg';
 
 import { TRUEFORGE_SCHEMA } from './schema';
+import type { PostgresSslConfig } from './ssl';
 import type { Database } from './types';
 
 const INT8_OID = 20;
@@ -41,8 +42,10 @@ export function createDb(options: {
   statementTimeoutMs: number;
   /** Postgres `idle_in_transaction_session_timeout` in ms. Applied to every pooled connection. */
   idleInTransactionSessionTimeoutMs: number;
+  /** node-pg SSL; from `POSTGRES_SSL_MODE`. Default `false` when omitted (tests). */
+  ssl?: PostgresSslConfig;
 }): Kysely<Database> {
-  const { connectionString, poolMax, statementTimeoutMs, idleInTransactionSessionTimeoutMs } = options;
+  const { connectionString, poolMax, statementTimeoutMs, idleInTransactionSessionTimeoutMs, ssl = false } = options;
   configurePgTypeParsers();
   return new Kysely<Database>({
     dialect: new PostgresDialect({
@@ -52,6 +55,7 @@ export function createDb(options: {
         statement_timeout: statementTimeoutMs,
         idle_in_transaction_session_timeout: idleInTransactionSessionTimeoutMs,
         options: `-c search_path=${TRUEFORGE_SCHEMA}`,
+        ssl,
       }),
     }),
   });

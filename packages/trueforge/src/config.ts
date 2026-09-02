@@ -18,6 +18,8 @@ import { fileURLToPath } from 'node:url';
 
 import envPaths from 'env-paths';
 
+import { resolvePostgresSslConfig, type PostgresSslConfig } from './db/postgres/ssl';
+
 const DEFAULT_PORT = 8790;
 /** Loopback default; container images set HOST=0.0.0.0 so probes and Service traffic reach the process. */
 const DEFAULT_HOST = 'localhost';
@@ -507,6 +509,11 @@ export type DistributedServerConfiguration = SharedServerConfiguration & {
    * Env: `POSTGRES_IDLE_IN_TRANSACTION_SESSION_TIMEOUT_MS`. Default 60000.
    */
   POSTGRES_IDLE_IN_TRANSACTION_SESSION_TIMEOUT_MS: number;
+  /**
+   * node-pg Pool `ssl` from `POSTGRES_SSL_MODE`.
+   * Unset / `disable` → no TLS. Same modes as ServiceFoundry `DB_SSL_MODE`.
+   */
+  POSTGRES_SSL: PostgresSslConfig;
   /** Peering URL shared by all replicas. Env: `REDIS_URL`. Default `redis://localhost:6379`. */
   REDIS_URL: string;
   /**
@@ -656,6 +663,7 @@ const configuration: ServerConfiguration = standalone
         raw: getEnv('POSTGRES_IDLE_IN_TRANSACTION_SESSION_TIMEOUT_MS'),
         defaultValue: 60_000,
       }),
+      POSTGRES_SSL: resolvePostgresSslConfig(getEnv('POSTGRES_SSL_MODE')),
       REDIS_URL: resolveRedisUrl(),
       OIDC: resolveOIDCConfig(),
     };
