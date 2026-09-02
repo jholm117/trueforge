@@ -89,12 +89,7 @@ export function DraftModelCatalogPanel({
       )
     : models;
   const sections = groupModelsByProvider(filtered);
-  const showCosts = filtered.some(
-    model =>
-      model.properties.inputCostPerMillionTokens !== undefined ||
-      model.properties.outputCostPerMillionTokens !== undefined,
-  );
-  const detailedGridClass = showCosts ? 'grid-cols-[minmax(0,1fr)_5rem_7rem]' : 'grid-cols-[minmax(0,1fr)_5rem]';
+  const detailedGridClass = 'grid-cols-[minmax(0,1fr)_5rem]';
 
   return (
     <>
@@ -124,7 +119,6 @@ export function DraftModelCatalogPanel({
         >
           <span>Model</span>
           <span>Context</span>
-          {showCosts ? <span>Cost / 1M</span> : null}
         </div>
       ) : null}
       <div
@@ -178,8 +172,7 @@ export function DraftModelCatalogPanel({
                         <span className="block truncate font-medium">{displayModelLabel(model.name)}</span>
                         {showHeading &&
                         (model.properties.contextLength !== undefined ||
-                          model.properties.maxOutputTokens !== undefined ||
-                          model.properties.inputCostPerMillionTokens !== undefined) ? (
+                          model.properties.maxOutputTokens !== undefined) ? (
                           <span className="text-text-secondary mt-0.5 block truncate text-[10px]">
                             {[
                               model.properties.contextLength === undefined
@@ -188,11 +181,6 @@ export function DraftModelCatalogPanel({
                               model.properties.maxOutputTokens === undefined
                                 ? null
                                 : `${formatTokens(model.properties.maxOutputTokens)} output`,
-                              model.properties.inputCostPerMillionTokens === undefined
-                                ? null
-                                : `$${model.properties.inputCostPerMillionTokens}/$${
-                                    model.properties.outputCostPerMillionTokens ?? '–'
-                                  } per 1M`,
                             ]
                               .filter(value => value !== null)
                               .join(' · ')}
@@ -206,15 +194,6 @@ export function DraftModelCatalogPanel({
                               ? '—'
                               : formatTokens(model.properties.contextLength)}
                           </span>
-                          {showCosts ? (
-                            <span className="text-text-secondary text-xs">
-                              {model.properties.inputCostPerMillionTokens === undefined
-                                ? '—'
-                                : `$${model.properties.inputCostPerMillionTokens}/$${
-                                    model.properties.outputCostPerMillionTokens ?? '–'
-                                  }`}
-                            </span>
-                          ) : null}
                         </>
                       ) : null}
                       {active && showHeading ? <Icon name="check" className="ml-auto size-3.5" /> : null}

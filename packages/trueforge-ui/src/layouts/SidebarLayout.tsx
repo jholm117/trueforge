@@ -166,7 +166,7 @@ export function SidebarLayout({ className }: { className?: string }) {
             'flex shrink-0 items-center gap-1 border-b border-border bg-topbar-bg px-2 py-1.5',
             // Desktop: hide when settings/idle or the thread header has nothing to show
             // (empty untitled draft). Mobile still needs Sessions + ShellActions.
-            (overlayOpen || isIdle || !hasChatHeaderContent) && 'md:hidden',
+            (overlayOpen || shell?.agentConfigOpen || isIdle || !hasChatHeaderContent) && 'md:hidden',
           )}
         >
           {!overlayOpen ? (

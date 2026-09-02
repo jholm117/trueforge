@@ -6,6 +6,7 @@ import type { AgentConfigEditor } from './draft/AgentConfigEditors.js';
 import { enabledToolsFromMount, type EditableMount } from './draft/agentConfigMounts.js';
 import { displayModelLabel, ProviderMark } from './draft/DraftModelCatalogPanel.js';
 import { modelParamSummary } from './draft/modelParamsSummary.js';
+import { runtimeConfigSummary } from './draft/runtimeConfigSummary.js';
 import { auiButtonClass } from './lib/buttonClasses.js';
 import { cn } from './lib/cn.js';
 import { Tooltip } from './primitives/Tooltip.js';
@@ -42,6 +43,7 @@ export function SaveAgentFormFields({
   const contextLength = Reflect.get(modelEntry?.properties ?? {}, 'contextLength');
   const maxOutputTokens = Reflect.get(modelEntry?.properties ?? {}, 'maxOutputTokens');
   const modelParams = modelParamSummary(spec.model.params);
+  const runtimeConfig = runtimeConfigSummary(spec.config);
 
   return (
     <>
@@ -78,8 +80,8 @@ export function SaveAgentFormFields({
         ) : (
           <p className="text-text-secondary text-xs">No model selected.</p>
         )}
-        <div className="mt-2 flex items-start gap-2">
-          <dl className="text-text-secondary flex min-w-0 flex-1 flex-wrap gap-x-3 gap-y-1 text-xs">
+        <div className="mt-2 flex items-center gap-2">
+          <dl className=" text-text-secondary flex min-w-0 flex-1 flex-wrap gap-x-3 gap-y-1 text-xs">
             {modelParams.length ? (
               modelParams.map(entry => (
                 <div key={entry.label} className="flex gap-1">
@@ -117,14 +119,14 @@ export function SaveAgentFormFields({
             <Icon name="pencil" className="size-3.5" />
           </button>
         </div>
-        <p className="text-text-secondary text-xs">
-          iteration limit: <span className="text-text-primary">{spec.config?.iterationLimit ?? 100}</span>
-          {' · '}sandbox: <span className="text-text-primary">{spec.config?.sandbox?.enabled ? 'on' : 'off'}</span>
-          {' · '}compaction:{' '}
-          <span className="text-text-primary">
-            {(spec.config?.contextManagement?.compaction?.enabled ?? true) ? 'on' : 'off'}
-          </span>
-        </p>
+        <dl className="text-text-secondary flex flex-wrap gap-x-3 gap-y-1 text-xs">
+          {runtimeConfig.map(entry => (
+            <div key={entry.label} className="flex gap-1">
+              <dt>{entry.label}:</dt>
+              <dd className="text-text-primary font-medium">{entry.value}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
       <div className="mb-3">

@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 
 import type { AgentSpec, ModelSelection } from '../server/types.js';
 import { useSlot } from '../theme/SlotsProvider.js';
-import { readAgentCapabilities, withAgentCapabilities, type AgentCapabilityValues } from './draft/agentCapabilities.js';
 import type { AgentConfigEditor } from './draft/AgentConfigEditors.js';
 import type { EditableMount } from './draft/agentConfigMounts.js';
 import { auiButtonClass } from './lib/buttonClasses.js';
@@ -43,7 +42,6 @@ export function SaveAgentForm({
   onCancel,
   onSave,
 }: SaveAgentFormProps) {
-  const DraftCapabilitiesPanel = useSlot('DraftCapabilitiesPanel');
   const SaveAgentFormFields = useSlot('SaveAgentFormFields');
   const errorRef = useRef<HTMLParagraphElement>(null);
 
@@ -52,9 +50,6 @@ export function SaveAgentForm({
     // scrollIntoView is unimplemented in jsdom; guard so tests don't throw.
     errorRef.current?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
   }, [error]);
-
-  const updateCapabilities = (values: AgentCapabilityValues) =>
-    onChange({ ...spec, config: withAgentCapabilities({ config: spec.config, values }) });
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
@@ -91,16 +86,6 @@ export function SaveAgentForm({
           onEdit={onEdit}
           onToggleMcpPreload={onToggleMcpPreload}
         />
-
-        <div>
-          <p className="text-text-secondary mb-1.5 text-xs font-semibold tracking-wide uppercase">Capabilities</p>
-          <DraftCapabilitiesPanel
-            layout="cards"
-            value={readAgentCapabilities(spec.config)}
-            disabled={saving}
-            onChange={updateCapabilities}
-          />
-        </div>
 
         {error ? (
           <p

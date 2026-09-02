@@ -11,6 +11,7 @@ import type { AgentConfigEditor } from './AgentConfigEditors.js';
 import { editableMountsFromSpec, enabledToolsFromMount } from './agentConfigMounts.js';
 import { displayModelLabel, ProviderMark } from './DraftModelCatalogPanel.js';
 import { modelParamSummary } from './modelParamsSummary.js';
+import { runtimeConfigSummary } from './runtimeConfigSummary.js';
 
 export type AgentConfigPanelProps = {
   spec: AgentSpec;
@@ -73,17 +74,14 @@ export function AgentConfigPanel({
   onChange,
   onOpenEditor,
 }: AgentConfigPanelProps) {
-  const config = spec.config ?? {};
   const instructionsId = useId();
   const Section = useSlot('AgentConfigSection');
   const mcp = editableMountsFromSpec(spec.mcpServers);
   const skills = editableMountsFromSpec(spec.skills);
-  const inputCost = model?.properties.inputCostPerMillionTokens;
-  const outputCost = model?.properties.outputCostPerMillionTokens;
   const modelParams = modelParamSummary(spec.model.params);
+  const runtimeConfig = runtimeConfigSummary(spec.config);
   const modelInfo = [
     model?.properties.contextLength === undefined ? null : formatTokens(model.properties.contextLength),
-    inputCost === undefined ? null : `$${inputCost}/$${outputCost ?? '–'}`,
   ].filter((value): value is string => value !== null);
   const modelInfoTitle = [
     model?.properties.contextLength === undefined
@@ -92,8 +90,6 @@ export function AgentConfigPanel({
     model?.properties.maxOutputTokens === undefined
       ? null
       : `Maximum output: ${model.properties.maxOutputTokens.toLocaleString()} tokens`,
-    inputCost === undefined ? null : `Input cost / 1M tokens: $${inputCost}`,
-    outputCost === undefined ? null : `Output cost / 1M tokens: $${outputCost}`,
   ]
     .filter((value): value is string => value !== null)
     .join('\n');
@@ -130,7 +126,7 @@ export function AgentConfigPanel({
               <Icon name="pencil" className="size-3.5" />
             </button>
           </div>
-          <div className="mt-2 flex items-start gap-2">
+          <div className="mt-2 flex items-center gap-2">
             <dl className="text-text-secondary flex min-w-0 flex-1 flex-wrap gap-x-3 gap-y-1 text-xs">
               {modelParams.length ? (
                 modelParams.map(entry => (
@@ -179,18 +175,14 @@ export function AgentConfigPanel({
           description="Control execution and context behavior."
           onEdit={() => onOpenEditor('runtime')}
         >
-          <p className="text-text-secondary text-xs leading-relaxed">
-            iteration limit: <span className="text-text-primary">{config.iterationLimit ?? 100}</span>
-            {' · '}sandbox: <span className="text-text-primary">{config.sandbox?.enabled ? 'on' : 'off'}</span>
-            {' · '}compaction:{' '}
-            <span className="text-text-primary">
-              {(config.contextManagement?.compaction?.enabled ?? true) ? 'on' : 'off'}
-            </span>
-            {' · '}large tool response:{' '}
-            <span className="text-text-primary">
-              {(config.contextManagement?.largeToolResponse?.enabled ?? true) ? 'on' : 'off'}
-            </span>
-          </p>
+          <dl className="text-text-secondary flex flex-wrap gap-x-3 gap-y-1 text-xs leading-relaxed">
+            {runtimeConfig.map(entry => (
+              <div key={entry.label} className="flex gap-1">
+                <dt>{entry.label}:</dt>
+                <dd className="text-text-primary font-medium">{entry.value}</dd>
+              </div>
+            ))}
+          </dl>
         </Section>
 
         <Section title="MCP Servers" onEdit={() => onOpenEditor('mcp')}>

@@ -13,8 +13,6 @@ const model: ModelSelection = {
   properties: {
     contextLength: 200_000,
     maxOutputTokens: 8_192,
-    inputCostPerMillionTokens: 3,
-    outputCostPerMillionTokens: 15,
   },
 };
 
@@ -54,10 +52,16 @@ describe('AgentConfigPanel', () => {
     );
 
     expect(screen.getByText(/200K/)).toBeInTheDocument();
-    expect(screen.getByText(/\$3\/\$15/)).toBeInTheDocument();
     expect(screen.getByText('25000')).toBeInTheDocument();
-    expect(screen.getByText('top-k:')).toBeInTheDocument();
-    expect(screen.getByText('parallel tool calls:')).toBeInTheDocument();
+    expect(screen.queryByText('temperature:')).not.toBeInTheDocument();
+    expect(screen.queryByText('top-k:')).not.toBeInTheDocument();
+    expect(screen.queryByText('parallel tool calls:')).not.toBeInTheDocument();
+    expect(screen.queryByText('file downloads:')).not.toBeInTheDocument();
+    expect(screen.queryByText('compaction threshold:')).not.toBeInTheDocument();
+    expect(screen.getByText('large tool response:')).toBeInTheDocument();
+    expect(screen.getByText('dynamic sub-agents:')).toBeInTheDocument();
+    expect(screen.getByText('generative UI:')).toBeInTheDocument();
+    expect(screen.getByText('ask user questions:')).toBeInTheDocument();
     expect(screen.getByText('1 tools')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit Runtime Config' })).toBeInTheDocument();
     expect(screen.queryByText('Structured Output')).not.toBeInTheDocument();

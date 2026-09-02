@@ -183,6 +183,8 @@ describe('SaveAgentButton', () => {
       'text-text-primary',
       'focus-visible:ring-focus-ring/40',
     );
+    expect(within(dialog).queryByText('file downloads:')).not.toBeInTheDocument();
+    expect(within(dialog).queryByText('compaction threshold:')).not.toBeInTheDocument();
   });
 
   it('opens with the latest runtime spec after flushing pending picker edits', async () => {
@@ -205,7 +207,7 @@ describe('SaveAgentButton', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Save agent' });
     expect(within(dialog).getByLabelText('Instructions')).toHaveValue('Latest flushed instructions.');
-    expect(within(dialog).getByRole('switch', { name: 'Generative UI' })).toHaveAttribute('aria-checked', 'false');
+    expect(within(dialog).getByText('generative UI:').parentElement).toHaveTextContent('off');
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Edit Connectors' }));
     const mcpDialog = await findStackedDialog('Edit Connectors');
@@ -239,13 +241,13 @@ describe('SaveAgentButton', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save Agent' }));
     const dialog = await screen.findByRole('dialog', { name: 'Save agent' });
     fireEvent.change(within(dialog).getByLabelText('Agent name'), { target: { value: 'discard-me' } });
-    fireEvent.click(within(dialog).getByRole('switch', { name: 'Generative UI' }));
+    fireEvent.change(within(dialog).getByLabelText('Instructions'), { target: { value: 'Discarded instructions' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Agent' }));
     const reopened = await screen.findByRole('dialog', { name: 'Save agent' });
     expect(within(reopened).getByLabelText('Agent name')).toHaveValue('');
-    expect(within(reopened).getByRole('switch', { name: 'Generative UI' })).toHaveAttribute('aria-checked', 'true');
+    expect(within(reopened).getByLabelText('Instructions')).toHaveValue('Be helpful.');
   });
 
   it('opens model editing as a stacked dialog', async () => {
@@ -274,7 +276,10 @@ describe('SaveAgentButton', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save Agent' }));
     const dialog = await screen.findByRole('dialog', { name: 'Save agent' });
     fireEvent.change(within(dialog).getByLabelText('Agent name'), { target: { value: 'my-agent' } });
-    fireEvent.click(within(dialog).getByRole('switch', { name: 'Generative UI' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Edit Runtime Config' }));
+    const runtimeDialog = await findStackedDialog('Edit Runtime Config');
+    fireEvent.click(within(runtimeDialog).getByRole('switch', { name: 'Generative UI' }));
+    fireEvent.click(within(runtimeDialog).getByRole('button', { name: 'Close' }));
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => expect(saveAgent).toHaveBeenCalledOnce());
@@ -287,8 +292,6 @@ describe('SaveAgentButton', () => {
         skills: [{ id: 'research', name: 'Research' }],
         config: {
           generativeUi: { enabled: false },
-          dynamicSubAgents: { enabled: true },
-          askUserQuestions: { enabled: true },
         },
       },
       intent: 'create',
@@ -390,7 +393,7 @@ describe('SaveAgentButton', () => {
     expect(within(dialog).getByLabelText('Agent name')).toBeDisabled();
     expect(within(dialog).getByLabelText('Instructions')).toBeDisabled();
     expect(within(dialog).getByRole('button', { name: 'Edit Model' })).toBeDisabled();
-    expect(within(dialog).getByRole('switch', { name: 'Generative UI' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Edit Runtime Config' })).toBeDisabled();
     expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeDisabled();
 
     pending.resolve({ agentId: 'agent-1' });

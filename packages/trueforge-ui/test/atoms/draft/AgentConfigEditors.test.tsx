@@ -17,7 +17,7 @@ beforeAll(() => {
 });
 
 describe('AgentConfigEditors', () => {
-  it('hides the model cost column when pricing is unavailable', () => {
+  it('renders model context metadata', () => {
     render(
       <SlotsProvider>
         <AgentConfigEditors
@@ -42,7 +42,6 @@ describe('AgentConfigEditors', () => {
     );
 
     expect(screen.getByText('Context')).toBeInTheDocument();
-    expect(screen.queryByText('Cost / 1M')).not.toBeInTheDocument();
   });
 
   it('uses toggles and sliders for model settings', () => {
@@ -74,9 +73,52 @@ describe('AgentConfigEditors', () => {
     fireEvent.click(screen.getByRole('switch', { name: 'Enable Maximum Tokens' }));
     expect(onChange).toHaveBeenCalledWith({
       ...spec,
-      model: { ...spec.model, params: { maxTokens: 2500 } },
+      model: { ...spec.model, params: { maxTokens: 8192 } },
     });
-    expect(screen.getByRole('button', { name: 'JSON' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'JSON' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: 'Enable Temperature' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: 'Parallel tool calls' })).not.toBeInTheDocument();
+  });
+
+  it('explicitly clears a model parameter when its toggle is disabled', () => {
+    const spec: AgentSpec = {
+      model: {
+        name: 'openai/gpt',
+        params: { maxTokens: 4096, temperature: 0.4 },
+      },
+    };
+    const onChange = vi.fn();
+    render(
+      <SlotsProvider>
+        <AgentConfigEditors
+          editor="model-settings"
+          spec={spec}
+          models={[
+            {
+              id: 'openai/gpt',
+              name: 'openai/gpt',
+              provider: { name: 'OpenAI' },
+              properties: { maxOutputTokens: 8_192 },
+            },
+          ]}
+          connectors={[]}
+          skills={[]}
+          loading={false}
+          error={null}
+          onChange={onChange}
+          onClose={vi.fn()}
+        />
+      </SlotsProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Enable Maximum Tokens' }));
+    expect(onChange).toHaveBeenCalledWith({
+      ...spec,
+      model: {
+        ...spec.model,
+        params: { maxTokens: undefined, temperature: 0.4 },
+      },
+    });
   });
 
   it('opens runtime configuration in a dedicated modal', () => {
@@ -100,6 +142,59 @@ describe('AgentConfigEditors', () => {
 
     expect(screen.getByRole('dialog', { name: 'Runtime Config' })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Context compaction' })).toBeInTheDocument();
+  });
+
+  it('retains nested runtime values while their parent is disabled', () => {
+    const spec: AgentSpec = {
+      model: { name: 'openai/gpt' },
+      config: {
+        sandbox: { enabled: false, fileDownloads: false },
+        contextManagement: {
+          compaction: {
+            enabled: false,
+            trigger: { type: 'input_tokens', value: 42_000 },
+          },
+          largeToolResponse: { enabled: false },
+        },
+      },
+    };
+    const onChange = vi.fn();
+    render(
+      <SlotsProvider>
+        <AgentConfigEditors
+          editor="runtime"
+          spec={spec}
+          models={[]}
+          connectors={[]}
+          skills={[]}
+          loading={false}
+          error={null}
+          sandboxAvailable
+          onChange={onChange}
+          onClose={vi.fn()}
+        />
+      </SlotsProvider>,
+    );
+
+    expect(screen.getByRole('switch', { name: 'File downloads' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'File downloads' })).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByRole('spinbutton', { name: /Compaction threshold tokens/ })).toBeDisabled();
+    expect(screen.getByRole('spinbutton', { name: /Compaction threshold tokens/ })).toHaveValue(42_000);
+
+    fireEvent.click(screen.getByRole('switch', { name: 'Context compaction' }));
+    expect(onChange).toHaveBeenCalledWith({
+      ...spec,
+      config: {
+        ...spec.config,
+        contextManagement: {
+          compaction: {
+            enabled: true,
+            trigger: { type: 'input_tokens', value: 42_000 },
+          },
+          largeToolResponse: { enabled: false },
+        },
+      },
+    });
   });
 
   it('loads MCP tools lazily and preserves unrelated mount selectors', async () => {
