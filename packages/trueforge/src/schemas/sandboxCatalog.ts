@@ -5,15 +5,18 @@
 import { z } from '@hono/zod-openapi';
 import { DaytonaSandboxProviderSchema, ModalSandboxProviderSchema } from './sandboxProvider';
 
-/**
- * Catalog wire type. Single variant today (avoids one-member `oneOf` in OpenAPI).
- * Widen to a discriminated union when a second provider ships.
- */
+const CatalogDaytonaSandboxProviderSchema = z
+  .object(DaytonaSandboxProviderSchema.omit({ auth: true }).shape)
+  .strict()
+  .openapi('CatalogDaytonaSandboxProvider');
+
+const CatalogModalSandboxProviderSchema = z
+  .object(ModalSandboxProviderSchema.omit({ auth: true }).shape)
+  .strict()
+  .openapi('CatalogModalSandboxProvider');
+
 export const CatalogSandboxProviderSchema = z
-  .discriminatedUnion('type', [
-    DaytonaSandboxProviderSchema.omit({ auth: true }).strict(),
-    ModalSandboxProviderSchema.omit({ auth: true }).strict(),
-  ])
+  .discriminatedUnion('type', [CatalogDaytonaSandboxProviderSchema, CatalogModalSandboxProviderSchema])
   .openapi('CatalogSandboxProvider');
 
 export const SandboxCatalogFileSchema = z

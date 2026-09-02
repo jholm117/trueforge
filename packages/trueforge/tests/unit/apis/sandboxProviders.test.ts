@@ -335,4 +335,13 @@ describe('sandbox-provider secret redaction and strict PUT', () => {
       }),
     );
   });
+
+  it('PUT provider switch does not reuse provider-specific build_metadata', async () => {
+    const { settingsRouter } = await createRouters();
+    expect((await settingsRouter.request('/', putInit(putBody))).status).toBe(200);
+
+    mockProviderFactory.mockClear();
+    expect((await settingsRouter.request('/', putInit(modalBody))).status).toBe(200);
+    expect(mockProviderFactory.mock.calls[0]?.[0]).not.toHaveProperty('build_metadata');
+  });
 });

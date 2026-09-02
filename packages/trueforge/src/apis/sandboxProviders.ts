@@ -102,26 +102,25 @@ export function createSandboxProvidersRouter<TTransaction>(deps: SandboxProvider
     const resolveManifest = (existing: SandboxProviderRecord | undefined): SandboxProviderManifest =>
       resolveManifestSecrets({ incoming, existing: existing?.manifest });
     try {
-      // NOTE: provider network I/O runs inside the transaction for now; the design is being revisited.
-      const { manifest, status } = await deps.withTransaction(async transaction => {
-        const locked = await deps.sandboxProviderStore.getSandboxProviderForUpdate(TENANT_ID, transaction);
-        const resolved = resolveManifest(locked);
-        // Pass persisted build_metadata so a settings re-save does not start a new snapshot for a
-        // bumped SANDBOX_IMAGE_URI (upgrades are unsupported — first configure has no metadata).
-        const provider = toSandboxProvider({
-          manifest: resolved,
-          tenant_id: TENANT_ID,
-          logger: deps.logger,
-          ...(locked ? { build_metadata: locked.build_metadata } : {}),
-        });
-        const built = toSandboxStatus(
-          await withTimeout(provider.buildImage(), BUILD_REQUEST_TIMEOUT_MS, 'sandbox buildImage'),
-        );
+      const existing = await deps.sandboxProviderStore.getSandboxProvider(TENANT_ID);
+      const manifest = resolveManifest(existing);
+      // Build references are provider-specific and must not survive a provider switch.
+      const buildMetadata = existing?.manifest.type === manifest.type ? existing.build_metadata : undefined;
+      const provider = toSandboxProvider({
+        manifest,
+        tenant_id: TENANT_ID,
+        logger: deps.logger,
+        ...(buildMetadata ? { build_metadata: buildMetadata } : {}),
+      });
+      const status = toSandboxStatus(
+        await withTimeout(provider.buildImage(), BUILD_REQUEST_TIMEOUT_MS, 'sandbox buildImage'),
+      );
+      await deps.withTransaction(async transaction => {
+        await deps.sandboxProviderStore.getSandboxProviderForUpdate(TENANT_ID, transaction);
         await deps.sandboxProviderStore.upsertSandboxProvider(
-          { tenant_id: TENANT_ID, manifest: resolved, ...built },
+          { tenant_id: TENANT_ID, manifest, ...status },
           transaction,
         );
-        return { manifest: resolved, status: built };
       });
       return c.json(
         {

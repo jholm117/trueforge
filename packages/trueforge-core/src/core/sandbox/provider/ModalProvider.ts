@@ -187,11 +187,20 @@ export class ModalSandboxProvider implements SandboxProvider {
 
   async downloadFile(params: { sandboxId: string; path: string }): Promise<Buffer> {
     try {
-      const bytes = await (await this.sandbox(params.sandboxId)).filesystem.readBytes(sandboxPath(params.path));
-      if (bytes.byteLength > this.fileMaxBytesForDownload) {
-        throw new SandboxFileTooLargeError(params.path, bytes.byteLength, this.fileMaxBytesForDownload);
+      const filesystem = (await this.sandbox(params.sandboxId)).filesystem;
+      const remotePath = sandboxPath(params.path);
+      const parentPath = remotePath.slice(0, remotePath.lastIndexOf('/')) || '/';
+      const fileInfo = (await filesystem.listFiles(parentPath)).find(entry => entry.path === remotePath);
+      if (fileInfo === undefined) {
+        throw new SandboxFileNotFoundError(params.path);
       }
-      return Buffer.from(bytes);
+      if (fileInfo.type === 'directory') {
+        throw new SandboxPathIsDirectoryError(params.path);
+      }
+      if (fileInfo.size > this.fileMaxBytesForDownload) {
+        throw new SandboxFileTooLargeError(params.path, fileInfo.size, this.fileMaxBytesForDownload);
+      }
+      return Buffer.from(await filesystem.readBytes(remotePath));
     } catch (error) {
       if (error instanceof SandboxFilesystemNotFoundError) {
         throw new SandboxFileNotFoundError(params.path);
