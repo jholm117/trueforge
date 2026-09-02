@@ -38,6 +38,7 @@ export type ResolveRepositoryCredentials = (input: {
   session_id: string;
   user_ref: string;
   repository: SessionRepository;
+  signal: AbortSignal;
 }) => Promise<string | null>;
 
 export const rejectUnconfiguredRepositoryCredentials: ResolveRepositoryCredentials = input =>

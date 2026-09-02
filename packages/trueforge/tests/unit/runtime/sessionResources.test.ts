@@ -41,6 +41,7 @@ describe('rejectUnconfiguredRepositoryCredentials', () => {
           access: 'read_write',
           credential_provider_ref: 'github-app:installation-123',
         },
+        signal: new AbortController().signal,
       }),
     ).rejects.toMatchObject({
       status: 422,
