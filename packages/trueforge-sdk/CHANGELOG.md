@@ -1,4 +1,17 @@
+## [0.1.4-rc.1] - 2026-09-02
+
 ## [0.1.4-rc.0] - 2026-08-27
+
+## 0.1.4-rc.1
+
+### Patch Changes
+
+- 648273b: Regenerate SDK from updated OpenAPI spec.
+- 648273b: Regenerate SDK from updated OpenAPI spec.
+- 52987a7: Add `internal.agents.getCodeSnippets` API under the new SDK `internal` namespace.
+- 38ce068: Add tenant-unique optional session `external_id`, `Sessions.getOrCreateByExternalId`, and an idempotent `POST /internal/sessions/get-or-create-by-external-id` endpoint and SDK method.
+- b654052: Add caller-owned session `metadata` (`Record<string, string>` with size limits) on create, update, and read. Persist as a new `session.metadata` jsonb column; leave session `custom` unchanged.
+- f175245: Add TrueFoundry-managed MCP list/get (SFY registry, gateway proxy URL, create/update 424).
 
 ## [0.1.3] - 2026-08-19
 

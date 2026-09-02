@@ -1,5 +1,49 @@
 # @truefoundry/trueforge
 
+## 0.2.0-rc.1
+
+### Minor Changes
+
+- 8491843: Add a slot-driven agent Metrics tab with aggregate cards, time-range filtering, and Harness-backed line charts.
+- a3a1395: Adds first-class cron schedules for existing agents: persist them, manage them via /api/v1/schedules, validate cron policy at write time, and advance due runs through a single-dispatcher claim path.
+- ef316d2: Add optional `OIDC_ALLOWED_EMAILS` allowlist (exact addresses and `*` globs) so OIDC logins can be limited to approved emails or domains.
+- 2025cef: Store Postgres app tables and Kysely migration bookkeeping in a dedicated `trueforge` schema, with an automatic one-time move from `public` so existing installs keep their data and migration history.
+- 8f1a2dc: Add a TrueFoundry-managed model registry. When `TRUEFOUNDRY_SERVICEFOUNDRY_SERVER_URL` is set, models are listed from the TrueFoundry ServiceFoundry server and turns are routed through the tenant's default AI Gateway with the caller's token. Mutually exclusive with OIDC. Supports internal mutual TLS to the ServiceFoundry server via `TRUEFOUNDRY_MTLS_ENABLED`/`TRUEFOUNDRY_MTLS_CERTS_DIR`.
+
+### Patch Changes
+
+- d89b2ff: Persist zero-initialized metrics on agent sessions.
+- 172bf14: Add caller-scoped session metrics meters, charts, and chart-data under `/internal/metrics` via a server-owned `ISessionMetricsStore`.
+- d89b2ff: Fold session metrics totals on createTurn and terminal writes.
+- af40621: Add persisted `agent.metadata` on Postgres and SQLite; store `updateAgent` can patch manifest and/or metadata.
+- a60f4c2: Add GET /api/v1/agents/{agent_id}/code-snippets with TypeScript TrueForge SDK stream and non-stream samples.
+- 55cc5e7: Add a dedicated controller entry point (`dist/controller-main.js`) that runs the periodic control loops (schedule dispatch) as a single-replica process for distributed mode (`STANDALONE=false`). It targets the server API via the new `SERVER_URL` env (default `http://localhost:$PORT`). Standalone mode keeps running the controller inside the server process.
+- 58940a7: Report a Daytona key that cannot register snapshots as missing key permissions (403) instead of an invalid API key (422), and name the grants to add in the Daytona dashboard.
+- c40129c: Cap Daytona status-refresh calls at 1 minute so a stalled provider cannot hang request handlers.
+- 9f3b4cd: Make optional `VITE_BASE_PATH` apply to both the UI public path and API/auth URLs (defaults to `/`).
+- 541d65d: Split MCP server persistence (`IMcpServerStore`) from Connect UX auth (`IMcpServerWithAuthStore` / `McpServerWithAuthStore`) so DB backends stay CRUD + OAuth client columns while authorize/status/revoke compose in via a token store.
+- f4fb4bd: Accept `DATABASE_URL` for hosted mode so managed Postgres (e.g. Railway) can be wired without discrete `POSTGRES_*` vars.
+- 3bc2ed8: List schedules is token-paginated (`limit` / `page_token`) and filters by comma-separated `agent_names`.
+- feb94aa: Add GET /api/v1/schedules/{schedule_id}/runs to list a schedule's runs (newest `scheduled_for` first), with the same creator-or-admin access as other schedule routes.
+- 8e64757: Add POST /api/v1/schedules/runs to trigger an immediate schedule run
+- 4ced8ef: Dispatch schedule runs through the session/turn API: get-or-create a session keyed by run id, then create a turn only when that session has none.
+- 38ce068: Add tenant-unique optional session `external_id`, `Sessions.getOrCreateByExternalId`, and an idempotent `POST /internal/sessions/get-or-create-by-external-id` endpoint and SDK method.
+- b654052: Add caller-owned session `metadata` (`Record<string, string>` with size limits) on create, update, and read. Persist as a new `session.metadata` jsonb column; leave session `custom` unchanged.
+- f175245: Add TrueFoundry-managed MCP list/get (SFY registry, gateway proxy URL, create/update 424).
+- Updated dependencies [648273b]
+- Updated dependencies [d89b2ff]
+- Updated dependencies [648273b]
+- Updated dependencies [172bf14]
+- Updated dependencies [d89b2ff]
+- Updated dependencies [c40129c]
+- Updated dependencies [52987a7]
+- Updated dependencies [38ce068]
+- Updated dependencies [b654052]
+- Updated dependencies [8f1a2dc]
+- Updated dependencies [f175245]
+  - @truefoundry/trueforge-sdk@0.1.4-rc.1
+  - @truefoundry/trueforge-core@0.2.0-rc.1
+
 ## 0.2.0-rc.0
 
 ### Minor Changes
