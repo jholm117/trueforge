@@ -29,8 +29,8 @@ function cloneAgentSpec(spec: AgentSpec): AgentSpec {
       ...spec.model,
       params: spec.model.params ? { ...spec.model.params } : undefined,
     },
-    mcpServers: spec.mcpServers?.map(item => ({ ...item })),
-    skills: spec.skills?.map(item => ({ ...item })),
+    mcpServers: spec.mcpServers?.map((item: object) => ({ ...item })),
+    skills: spec.skills?.map((item: object) => ({ ...item })),
     config: spec.config ? { ...spec.config } : undefined,
   };
 }
@@ -39,19 +39,19 @@ export type SaveAgentButtonProps = {
   disabled?: boolean;
   className?: string;
   children?: string;
-  /** Effective drawer spec to seed the save form before debounced fields finish syncing. */
-  agentSpecOverride?: AgentSpec;
+  /** Unsynced drawer instructions to overlay onto the latest runtime spec. */
+  instructionsOverride?: string;
 };
 
 export function SaveAgentButton({
   disabled = false,
   className,
   children = 'Save Agent',
-  agentSpecOverride,
+  instructionsOverride,
 }: SaveAgentButtonProps) {
   return (
     <DraftCatalogProvider>
-      <SaveAgentButtonContent disabled={disabled} className={className} agentSpecOverride={agentSpecOverride}>
+      <SaveAgentButtonContent disabled={disabled} className={className} instructionsOverride={instructionsOverride}>
         {children}
       </SaveAgentButtonContent>
     </DraftCatalogProvider>
@@ -62,17 +62,16 @@ function SaveAgentButtonContent({
   disabled,
   className,
   children,
-  agentSpecOverride,
+  instructionsOverride,
 }: {
   disabled: boolean;
   className?: string;
   children: string;
-  agentSpecOverride?: AgentSpec;
+  instructionsOverride?: string;
 }) {
   const { agentSpec, draftSessionId } = useTrueFoundryAgentSpec();
-  const effectiveAgentSpec = agentSpecOverride ?? agentSpec;
-  const agentSpecRef = useRef(effectiveAgentSpec);
-  agentSpecRef.current = effectiveAgentSpec;
+  const agentSpecRef = useRef(agentSpec);
+  agentSpecRef.current = agentSpec;
   const flushAgentSpec = useTrueFoundryFlushAgentSpec();
   const adoptAgentSpec = useTrueFoundryAdoptAgentSpec();
   const builder = useOptionalServer();
@@ -110,8 +109,12 @@ function SaveAgentButtonContent({
     setError(null);
     catalog.ensureLoaded();
     await flushAgentSpec();
-    const latestAgentSpec = agentSpecOverride ?? agentSpecRef.current;
-    if (latestAgentSpec === null) return;
+    const flushedAgentSpec = agentSpecRef.current;
+    if (flushedAgentSpec === null) return;
+    const latestAgentSpec =
+      instructionsOverride === undefined
+        ? flushedAgentSpec
+        : { ...flushedAgentSpec, instructions: instructionsOverride };
     const currentName = shell?.mode.status === 'active' ? (shell.mode.agentName ?? shell.mode.agentId ?? '') : '';
     setIntent(currentName ? 'update' : 'create');
     setName(currentName);
@@ -177,7 +180,7 @@ function SaveAgentButtonContent({
     <>
       <button
         type="button"
-        disabled={disabled || builder === null || effectiveAgentSpec === null}
+        disabled={disabled || builder === null || agentSpec === null}
         className={auiButtonClass({ variant: 'outline', size: 'sm', className })}
         onClick={() => void show()}
       >

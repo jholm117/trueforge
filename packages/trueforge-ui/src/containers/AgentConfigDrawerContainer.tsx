@@ -15,7 +15,7 @@ import { useShellMode } from '../server/ShellModeContext.js';
 import type { AgentSpec, McpToolSelection } from '../server/types.js';
 import { useSlot } from '../theme/SlotsProvider.js';
 
-export function AgentConfigDrawerContainer() {
+export function AgentConfigDrawerContainer({ showClose = false }: { showClose?: boolean }) {
   const { agentSpec } = useTrueFoundryAgentSpec();
   const updateAgentSpec = useTrueFoundryUpdateAgentSpec();
   const flushAgentSpec = useTrueFoundryFlushAgentSpec();
@@ -39,6 +39,11 @@ export function AgentConfigDrawerContainer() {
     value: agentSpec?.instructions ?? '',
     onCommit: commitInstructions,
   });
+  const closeDrawer = useCallback(() => {
+    flushInstructions();
+    void flushAgentSpec();
+    shell.setAgentConfigOpen(false);
+  }, [flushAgentSpec, flushInstructions, shell]);
 
   useEffect(() => {
     if (shell.agentConfigOpen) catalog.ensureLoaded();
@@ -47,15 +52,11 @@ export function AgentConfigDrawerContainer() {
   useEffect(() => {
     if (!shell.agentConfigOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        flushInstructions();
-        void flushAgentSpec();
-        shell.setAgentConfigOpen(false);
-      }
+      if (event.key === 'Escape' && editor === null) closeDrawer();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [flushAgentSpec, flushInstructions, shell]);
+  }, [closeDrawer, editor, shell.agentConfigOpen]);
 
   useEffect(
     () => () => {
@@ -102,13 +103,13 @@ export function AgentConfigDrawerContainer() {
       <AgentConfigPanel
         spec={agentSpec}
         model={model}
-        saveAction={<SaveAgentButton agentSpecOverride={{ ...agentSpec, instructions: instructionDraft }} />}
+        saveAction={<SaveAgentButton instructionsOverride={instructionDraft} />}
         skillsAvailable={capabilities?.skill.enabled === true}
         instructions={instructionDraft}
         onInstructionsChange={onInstructionChange}
         onInstructionsBlur={flushInstructions}
-        onChange={updateSpec}
         onOpenEditor={setEditor}
+        onClose={showClose ? closeDrawer : undefined}
       />
       <AgentConfigEditors
         editor={editor}

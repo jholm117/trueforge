@@ -150,7 +150,7 @@ export function StackChatPanel({ className, threadHeaderEnd }: StackChatPanelPro
           aria-label="Agent Config"
           className="absolute inset-0 z-20 border-l border-border shadow-xl"
         >
-          <AgentConfigDrawerContainer />
+          <AgentConfigDrawerContainer showClose />
         </aside>
       ) : null}
     </div>

@@ -219,20 +219,14 @@ describe('SaveAgentButton', () => {
 
   it('uses the drawer instruction draft when opening before debounce sync completes', async () => {
     renderButton({
-      children: (
-        <SaveAgentButton
-          agentSpecOverride={{
-            ...agentSpec,
-            instructions: 'Instructions currently visible in the drawer.',
-          }}
-        />
-      ),
+      children: <SaveAgentButton instructionsOverride="Instructions currently visible in the drawer." />,
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Save Agent' }));
     const dialog = await screen.findByRole('dialog', { name: 'Save agent' });
 
     expect(within(dialog).getByLabelText('Instructions')).toHaveValue('Instructions currently visible in the drawer.');
+    expect(within(dialog).getByText('gpt-4.1')).toBeInTheDocument();
   });
 
   it('labels an existing mutable binding as Update Agent and submits an update', async () => {

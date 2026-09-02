@@ -45,7 +45,6 @@ describe('AgentConfigPanel', () => {
           instructions={spec.instructions ?? ''}
           onInstructionsChange={vi.fn()}
           onInstructionsBlur={vi.fn()}
-          onChange={vi.fn()}
           onOpenEditor={vi.fn()}
         />
       </SlotsProvider>,
@@ -73,7 +72,6 @@ describe('AgentConfigPanel', () => {
   });
 
   it('routes editor actions and live instruction changes', () => {
-    const onChange = vi.fn();
     const onInstructionsChange = vi.fn();
     const onOpenEditor = vi.fn();
     render(
@@ -85,7 +83,6 @@ describe('AgentConfigPanel', () => {
           instructions={spec.instructions ?? ''}
           onInstructionsChange={onInstructionsChange}
           onInstructionsBlur={vi.fn()}
-          onChange={onChange}
           onOpenEditor={onOpenEditor}
         />
       </SlotsProvider>,
@@ -101,5 +98,26 @@ describe('AgentConfigPanel', () => {
       target: { value: 'New instructions' },
     });
     expect(onInstructionsChange).toHaveBeenCalledWith('New instructions');
+  });
+
+  it('renders an optional close action for overlay layouts', () => {
+    const onClose = vi.fn();
+    render(
+      <SlotsProvider>
+        <AgentConfigPanel
+          spec={spec}
+          model={model}
+          skillsAvailable
+          instructions={spec.instructions ?? ''}
+          onInstructionsChange={vi.fn()}
+          onInstructionsBlur={vi.fn()}
+          onOpenEditor={vi.fn()}
+          onClose={onClose}
+        />
+      </SlotsProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close agent config' }));
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });

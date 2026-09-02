@@ -21,8 +21,8 @@ export type AgentConfigPanelProps = {
   instructions: string;
   onInstructionsChange: (value: string) => void;
   onInstructionsBlur: () => void;
-  onChange: (spec: AgentSpec) => void;
   onOpenEditor: (editor: AgentConfigEditor) => void;
+  onClose?: () => void;
 };
 
 function formatTokens(value: number): string {
@@ -71,8 +71,8 @@ export function AgentConfigPanel({
   instructions,
   onInstructionsChange,
   onInstructionsBlur,
-  onChange,
   onOpenEditor,
+  onClose,
 }: AgentConfigPanelProps) {
   const instructionsId = useId();
   const Section = useSlot('AgentConfigSection');
@@ -101,6 +101,16 @@ export function AgentConfigPanel({
         <h2 className="text-sm font-semibold">Agent Config</h2>
         <span className="min-w-0 flex-1" />
         {saveAction}
+        {onClose ? (
+          <button
+            type="button"
+            aria-label="Close agent config"
+            className={auiButtonClass({ variant: 'ghost', size: 'icon', className: 'size-8' })}
+            onClick={onClose}
+          >
+            <Icon name="xmark" />
+          </button>
+        ) : null}
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <Section title="Model">
