@@ -53,6 +53,7 @@ export type {
   ListSessionsOrder,
   ListSessionsParams,
   McpServerMount,
+  McpToolSelection,
   Model,
   ModelCatalogServer,
   ModelEntry,

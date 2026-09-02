@@ -1,0 +1,82 @@
+// @vitest-environment jsdom
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+import { AgentConfigPanel } from '@/atoms/draft/AgentConfigPanel.js';
+import type { AgentSpec, ModelSelection } from '@/server/types.js';
+import { SlotsProvider } from '@/theme/SlotsProvider.js';
+
+const model: ModelSelection = {
+  id: 'claude',
+  name: 'anthropic/claude',
+  provider: { name: 'Anthropic' },
+  properties: {
+    contextLength: 200_000,
+    maxOutputTokens: 8_192,
+    inputCostPerMillionTokens: 3,
+    outputCostPerMillionTokens: 15,
+  },
+};
+
+const spec: AgentSpec = {
+  model: {
+    name: model.name,
+    params: {
+      maxTokens: 25000,
+      reasoningEffort: 'high',
+      temperature: 0.7,
+      topP: 0.9,
+      topK: 40,
+      parallelToolCalls: true,
+    },
+  },
+  instructions: 'Be useful.',
+  mcpServers: [{ id: 'github', name: 'GitHub', enableTools: ['issues.list'] }],
+  skills: [{ id: 'research', name: 'Research' }],
+  config: { sandbox: { enabled: true } },
+};
+
+describe('AgentConfigPanel', () => {
+  it('shows supported configuration and omits deferred sections', () => {
+    render(
+      <SlotsProvider>
+        <AgentConfigPanel spec={spec} model={model} skillsAvailable onChange={vi.fn()} onOpenEditor={vi.fn()} />
+      </SlotsProvider>,
+    );
+
+    expect(screen.getByText(/200K/)).toBeInTheDocument();
+    expect(screen.getByText(/\$3\/\$15/)).toBeInTheDocument();
+    expect(screen.getByText('25000')).toBeInTheDocument();
+    expect(screen.getByText('top-k:')).toBeInTheDocument();
+    expect(screen.getByText('parallel tool calls:')).toBeInTheDocument();
+    expect(screen.getByText('1 tools')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit Runtime Config' })).toBeInTheDocument();
+    expect(screen.queryByText('Structured Output')).not.toBeInTheDocument();
+    expect(screen.queryByText('Metadata')).not.toBeInTheDocument();
+    expect(screen.queryByText('Endpoint')).not.toBeInTheDocument();
+    expect(screen.queryByText('Variables')).not.toBeInTheDocument();
+    expect(screen.queryByText('Initial messages')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Close agent config' })).not.toBeInTheDocument();
+  });
+
+  it('routes editor actions and live instruction changes', () => {
+    const onChange = vi.fn();
+    const onOpenEditor = vi.fn();
+    render(
+      <SlotsProvider>
+        <AgentConfigPanel spec={spec} model={model} skillsAvailable onChange={onChange} onOpenEditor={onOpenEditor} />
+      </SlotsProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Model settings' }));
+    expect(onOpenEditor).toHaveBeenCalledWith('model-settings');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Runtime Config' }));
+    expect(onOpenEditor).toHaveBeenCalledWith('runtime');
+
+    fireEvent.change(screen.getByPlaceholderText('Enter detailed instructions for your agent…'), {
+      target: { value: 'New instructions' },
+    });
+    expect(onChange).toHaveBeenCalledWith({ ...spec, instructions: 'New instructions' });
+  });
+});

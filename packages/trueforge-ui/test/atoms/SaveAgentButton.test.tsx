@@ -260,7 +260,8 @@ describe('SaveAgentButton', () => {
     expect(modelDialog).toHaveAttribute('aria-label', 'Edit model');
     expect(saveDialog).toHaveAttribute('open');
     expect(modelDialog).toHaveAttribute('open');
-    fireEvent.click(await within(modelDialog).findByRole('option', { name: 'claude-sonnet-4-6' }));
+    fireEvent.click(within(modelDialog).getByRole('button', { name: 'Anthropic' }));
+    fireEvent.click(await within(modelDialog).findByRole('option', { name: /claude-sonnet-4-6/ }));
     expect(within(saveDialog).getByText('claude-sonnet-4-6')).toBeInTheDocument();
   });
 

@@ -8,6 +8,7 @@ import { ShellActions } from '../atoms/ShellActions.js';
 import { auiButtonClass } from '../atoms/lib/buttonClasses.js';
 import { cn } from '../atoms/lib/cn.js';
 import { Spinner } from '../atoms/primitives/Spinner.js';
+import { AgentConfigDrawerContainer } from '../containers/AgentConfigDrawerContainer.js';
 import { Thread } from '../containers/Thread.js';
 import { ThreadListContainer } from '../containers/ThreadListContainer.js';
 import { Icon } from '../icons/Icon.js';
@@ -81,7 +82,7 @@ export function DrawerLayout({ className }: { className?: string }) {
             <NamedAgentHeaderLabel />
             <span className="min-w-0 flex-1" />
             <ClearChatButton />
-            <SaveAgentButton />
+            {!shell?.agentConfigOpen ? <SaveAgentButton /> : null}
           </>
         ) : (
           <span className="min-w-0 flex-1" />
@@ -113,34 +114,45 @@ export function DrawerLayout({ className }: { className?: string }) {
           </>
         ) : null}
       </header>
-      <div ref={mainRef} className="min-h-0 min-w-0 flex-1">
-        {settingsOpen ? (
-          <Suspense
-            fallback={
-              <div
-                className="flex h-full items-center justify-center"
-                role="status"
-                aria-live="polite"
-                aria-busy="true"
-              >
-                <Spinner size={28} className="text-text-primary" />
-                <span className="sr-only">Loading</span>
-              </div>
-            }
+      <div className="flex min-h-0 min-w-0 flex-1">
+        <div ref={mainRef} className="min-h-0 min-w-0 flex-1">
+          {settingsOpen ? (
+            <Suspense
+              fallback={
+                <div
+                  className="flex h-full items-center justify-center"
+                  role="status"
+                  aria-live="polite"
+                  aria-busy="true"
+                >
+                  <Spinner size={28} className="text-text-primary" />
+                  <span className="sr-only">Loading</span>
+                </div>
+              }
+            >
+              <TruefoundrySettingsBuilder />
+            </Suspense>
+          ) : sessionsOpen ? (
+            <SessionsPage />
+          ) : libraryOpen && shell?.libraryAgentId != null ? (
+            <AgentDetailsPage key={shell.libraryAgentId} agentId={shell.libraryAgentId} />
+          ) : libraryOpen ? (
+            <AgentsLibrary onSelectAgent={() => setThreadsOpen(false)} />
+          ) : isIdle ? (
+            <SelectAgentEmptyState />
+          ) : (
+            <Thread />
+          )}
+        </div>
+        {shell?.agentConfigOpen ? (
+          <aside
+            role="dialog"
+            aria-label="Agent Config"
+            className="absolute inset-y-0 right-0 z-20 w-full max-w-sm border-l border-border shadow-xl md:static md:z-auto md:w-[22rem] md:max-w-none md:shrink-0 md:shadow-none"
           >
-            <TruefoundrySettingsBuilder />
-          </Suspense>
-        ) : sessionsOpen ? (
-          <SessionsPage />
-        ) : libraryOpen && shell?.libraryAgentId != null ? (
-          <AgentDetailsPage key={shell.libraryAgentId} agentId={shell.libraryAgentId} />
-        ) : libraryOpen ? (
-          <AgentsLibrary onSelectAgent={() => setThreadsOpen(false)} />
-        ) : isIdle ? (
-          <SelectAgentEmptyState />
-        ) : (
-          <Thread />
-        )}
+            <AgentConfigDrawerContainer />
+          </aside>
+        ) : null}
       </div>
       {threadsOpen ? (
         <>
