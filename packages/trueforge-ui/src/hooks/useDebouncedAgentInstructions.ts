@@ -17,6 +17,8 @@ export function useDebouncedAgentInstructions({
   const draftRef = useRef(value);
   const dirtyRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onCommitRef = useRef(onCommit);
+  onCommitRef.current = onCommit;
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== null) {
@@ -29,8 +31,8 @@ export function useDebouncedAgentInstructions({
     clearTimer();
     if (!dirtyRef.current) return;
     dirtyRef.current = false;
-    onCommit(draftRef.current);
-  }, [clearTimer, onCommit]);
+    onCommitRef.current(draftRef.current);
+  }, [clearTimer]);
 
   const onChange = useCallback(
     (nextValue: string) => {
@@ -54,10 +56,10 @@ export function useDebouncedAgentInstructions({
       clearTimer();
       if (dirtyRef.current) {
         dirtyRef.current = false;
-        onCommit(draftRef.current);
+        onCommitRef.current(draftRef.current);
       }
     },
-    [clearTimer, onCommit],
+    [clearTimer],
   );
 
   return { draft, onChange, flush };

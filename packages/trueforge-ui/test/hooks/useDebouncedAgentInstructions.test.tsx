@@ -44,6 +44,26 @@ describe('useDebouncedAgentInstructions', () => {
     expect(onCommit).toHaveBeenCalledOnce();
   });
 
+  it('does not flush when the commit callback changes identity during a rerender', () => {
+    const firstCommit = vi.fn();
+    const latestCommit = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ onCommit }: { onCommit: (value: string) => void }) =>
+        useDebouncedAgentInstructions({ value: '', onCommit, delayMs: 400 }),
+      { initialProps: { onCommit: firstCommit } },
+    );
+
+    act(() => result.current.onChange('Debounced value'));
+    rerender({ onCommit: latestCommit });
+
+    expect(firstCommit).not.toHaveBeenCalled();
+    expect(latestCommit).not.toHaveBeenCalled();
+
+    act(() => vi.advanceTimersByTime(400));
+    expect(firstCommit).not.toHaveBeenCalled();
+    expect(latestCommit).toHaveBeenCalledWith('Debounced value');
+  });
+
   it('commits pending input when the drawer unmounts', () => {
     const onCommit = vi.fn();
     const { result, unmount } = renderHook(() => useDebouncedAgentInstructions({ value: '', onCommit, delayMs: 400 }));

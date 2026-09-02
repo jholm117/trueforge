@@ -39,12 +39,19 @@ export type SaveAgentButtonProps = {
   disabled?: boolean;
   className?: string;
   children?: string;
+  /** Effective drawer spec to seed the save form before debounced fields finish syncing. */
+  agentSpecOverride?: AgentSpec;
 };
 
-export function SaveAgentButton({ disabled = false, className, children = 'Save Agent' }: SaveAgentButtonProps) {
+export function SaveAgentButton({
+  disabled = false,
+  className,
+  children = 'Save Agent',
+  agentSpecOverride,
+}: SaveAgentButtonProps) {
   return (
     <DraftCatalogProvider>
-      <SaveAgentButtonContent disabled={disabled} className={className}>
+      <SaveAgentButtonContent disabled={disabled} className={className} agentSpecOverride={agentSpecOverride}>
         {children}
       </SaveAgentButtonContent>
     </DraftCatalogProvider>
@@ -55,14 +62,17 @@ function SaveAgentButtonContent({
   disabled,
   className,
   children,
+  agentSpecOverride,
 }: {
   disabled: boolean;
   className?: string;
   children: string;
+  agentSpecOverride?: AgentSpec;
 }) {
   const { agentSpec, draftSessionId } = useTrueFoundryAgentSpec();
-  const agentSpecRef = useRef(agentSpec);
-  agentSpecRef.current = agentSpec;
+  const effectiveAgentSpec = agentSpecOverride ?? agentSpec;
+  const agentSpecRef = useRef(effectiveAgentSpec);
+  agentSpecRef.current = effectiveAgentSpec;
   const flushAgentSpec = useTrueFoundryFlushAgentSpec();
   const adoptAgentSpec = useTrueFoundryAdoptAgentSpec();
   const builder = useOptionalServer();
@@ -100,7 +110,7 @@ function SaveAgentButtonContent({
     setError(null);
     catalog.ensureLoaded();
     await flushAgentSpec();
-    const latestAgentSpec = agentSpecRef.current;
+    const latestAgentSpec = agentSpecOverride ?? agentSpecRef.current;
     if (latestAgentSpec === null) return;
     const currentName = shell?.mode.status === 'active' ? (shell.mode.agentName ?? shell.mode.agentId ?? '') : '';
     setIntent(currentName ? 'update' : 'create');
@@ -167,7 +177,7 @@ function SaveAgentButtonContent({
     <>
       <button
         type="button"
-        disabled={disabled || builder === null || agentSpec === null}
+        disabled={disabled || builder === null || effectiveAgentSpec === null}
         className={auiButtonClass({ variant: 'outline', size: 'sm', className })}
         onClick={() => void show()}
       >

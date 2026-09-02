@@ -102,7 +102,7 @@ export function AgentConfigDrawerContainer() {
       <AgentConfigPanel
         spec={agentSpec}
         model={model}
-        saveAction={<SaveAgentButton />}
+        saveAction={<SaveAgentButton agentSpecOverride={{ ...agentSpec, instructions: instructionDraft }} />}
         skillsAvailable={capabilities?.skill.enabled === true}
         instructions={instructionDraft}
         onInstructionsChange={onInstructionChange}
