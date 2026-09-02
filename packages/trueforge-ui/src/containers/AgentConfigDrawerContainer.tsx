@@ -52,7 +52,9 @@ export function AgentConfigDrawerContainer({ showClose = false }: { showClose?: 
   useEffect(() => {
     if (!shell.agentConfigOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && editor === null) closeDrawer();
+      if (event.key === 'Escape' && editor === null && document.querySelector('dialog[open]') === null) {
+        closeDrawer();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
