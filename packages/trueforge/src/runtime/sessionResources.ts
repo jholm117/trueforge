@@ -134,6 +134,8 @@ function dcrHeadersResolver(params: {
 
 /**
  * Load MCP url + headers for a configured server.
+ * - `truefoundry`: AI Gateway proxy — pass the caller's TF access token as Bearer
+ *   (wire `auth: dcr` is Connect UX only; do not use local DCR for invoke).
  * - `remote` + `dcr`: resolveMcpAuth via the harness token store.
  * - header / no-auth: resolveConfiguredMcpRequestHeaders.
  * Returns undefined when the server is not registered — callers choose the response.
@@ -145,6 +147,7 @@ export async function getMcpConnection({
   tokenStore,
   clientName,
   userRef,
+  accessToken,
 }: {
   tenant_id: string;
   name: string;
@@ -152,10 +155,23 @@ export async function getMcpConnection({
   tokenStore: IOAuthTokenStore;
   clientName: string;
   userRef: string;
+  /** Required when `manifest.type` is `truefoundry` (gateway invoke). */
+  accessToken?: string;
 }): Promise<McpConnection | undefined> {
   const record = await store.getServer({ tenant_id, name });
   if (record === undefined) {
     return undefined;
+  }
+  if (record.manifest.type === 'truefoundry') {
+    if (accessToken === undefined || accessToken.length === 0) {
+      throw new HTTPException(401, {
+        message: 'Authentication token required to call TrueFoundry-managed MCP servers',
+      });
+    }
+    return {
+      url: record.manifest.url,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    };
   }
   if (record.manifest.auth?.type === 'dcr') {
     return {

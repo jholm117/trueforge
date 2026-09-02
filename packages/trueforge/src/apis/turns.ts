@@ -30,6 +30,7 @@ import { HTTPException } from 'hono/http-exception';
 import { streamSSE } from 'hono/streaming';
 import type { Logger } from 'winston';
 import type { ResolveUserContext, UserContext } from '../auth/identity';
+import { readAccessToken } from '../auth/middleware';
 import configuration from '../config';
 import type { IAgentStore } from '../db/agentStore';
 import type { IMcpServerStore } from '../db/mcpServerStore';
@@ -128,6 +129,8 @@ export type BeginTurnExecutionDeps = Pick<
 > & {
   modelProviderStore: IModelProviderStore;
   mcpServerStore: IMcpServerStore;
+  /** Caller TF token for gateway MCP invoke; omitted for scheduler / no-request paths. */
+  accessToken?: string;
 };
 
 /**
@@ -145,6 +148,7 @@ function createTurnResolver(deps: {
   signal: AbortSignal;
   userRef: string;
   sessionId: string;
+  accessToken?: string;
 }): TurnResourceResolver {
   const {
     mcpServerStore,
@@ -157,6 +161,7 @@ function createTurnResolver(deps: {
     signal,
     userRef,
     sessionId,
+    accessToken,
   } = deps;
   return new TurnResourceResolver({
     llm: async name => {
@@ -183,6 +188,7 @@ function createTurnResolver(deps: {
         tokenStore,
         clientName: configuration.MCP_DCR_OAUTH_CLIENT_NAME,
         userRef,
+        ...(accessToken !== undefined ? { accessToken } : {}),
       });
       if (connection === undefined) {
         throw new HTTPException(422, {
@@ -385,6 +391,7 @@ export async function beginTurnExecution(params: {
     signal: abortController.signal,
     userRef,
     sessionId,
+    ...(deps.accessToken !== undefined ? { accessToken: deps.accessToken } : {}),
   });
 
   // First turn only: derive the title from the first user message. The store
@@ -666,6 +673,7 @@ export function createTurnsRouter(deps: TurnsRouterDeps) {
     }
 
     const userRef = deps.resolveUserContext(c).userRef;
+    const accessToken = readAccessToken(c);
     const turnParams = {
       session,
       input: body.input,
@@ -675,6 +683,7 @@ export function createTurnsRouter(deps: TurnsRouterDeps) {
         ...deps,
         modelProviderStore: deps.resolveModelProviderStore(c),
         mcpServerStore: deps.resolveMcpServerStore(c),
+        ...(accessToken !== undefined ? { accessToken } : {}),
       },
     };
 
