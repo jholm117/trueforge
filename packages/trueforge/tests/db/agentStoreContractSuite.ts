@@ -3,7 +3,7 @@
  * Runs under jest against a fresh store per test (see backend test files).
  */
 import { AgentSpecSchema, type AgentSpec } from '@truefoundry/trueforge-core/agent-session';
-import { AgentNameConflictError, type IAgentStore } from '../../src/db/agentStore';
+import { AgentExternalIdConflictError, AgentNameConflictError, type IAgentStore } from '../../src/db/agentStore';
 
 const TENANT = 'default';
 
@@ -31,6 +31,7 @@ export function runAgentStoreContractSuite(getStore: () => IAgentStore): void {
     expect(created.id.length).toBeGreaterThan(0);
     expect(created.manifest).toEqual(manifest());
     expect(created.metadata).toEqual({});
+    expect(created.external_id).toBeNull();
     expect(created.created_at).toMatch(ISO_UTC);
     expect(created.updated_at).toBe(created.created_at);
 
@@ -166,5 +167,56 @@ export function runAgentStoreContractSuite(getStore: () => IAgentStore): void {
     });
 
     expect(await store.getAgent({ tenant_id: 'other-tenant', id: created.id })).toBeUndefined();
+  });
+
+  it('createAgent persists external_id', async () => {
+    const store = getStore();
+    const created = await store.createAgent({
+      tenant_id: TENANT,
+      name: 'research',
+      manifest: manifest(),
+      external_id: 'sf-agent-1',
+    });
+    expect(created.external_id).toBe('sf-agent-1');
+    expect(await store.getAgent({ tenant_id: TENANT, id: created.id })).toEqual(created);
+  });
+
+  it('createAgent unique external_id within a tenant; nulls and other tenants do not collide', async () => {
+    const store = getStore();
+    await store.createAgent({
+      tenant_id: TENANT,
+      name: 'alpha',
+      manifest: manifest(),
+      external_id: 'shared-key',
+    });
+    await expect(
+      store.createAgent({
+        tenant_id: TENANT,
+        name: 'beta',
+        manifest: manifest(),
+        external_id: 'shared-key',
+      }),
+    ).rejects.toBeInstanceOf(AgentExternalIdConflictError);
+    await store.createAgent({
+      tenant_id: 'other-tenant',
+      name: 'alpha',
+      manifest: manifest(),
+      external_id: 'shared-key',
+    });
+    await store.createAgent({ tenant_id: TENANT, name: 'gamma', manifest: manifest(), external_id: null });
+    await store.createAgent({ tenant_id: TENANT, name: 'delta', manifest: manifest(), external_id: null });
+  });
+
+  it('updateAgent can write external_id after create', async () => {
+    const store = getStore();
+    const created = await store.createAgent({ tenant_id: TENANT, name: 'research', manifest: manifest() });
+    const updated = await store.updateAgent({
+      tenant_id: TENANT,
+      id: created.id,
+      external_id: 'sf-agent-1',
+    });
+    expect(updated?.external_id).toBe('sf-agent-1');
+    expect(updated?.manifest).toEqual(created.manifest);
+    expect(await store.getAgent({ tenant_id: TENANT, id: created.id })).toEqual(updated);
   });
 }
