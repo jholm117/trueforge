@@ -17,6 +17,34 @@ beforeAll(() => {
 });
 
 describe('AgentConfigEditors', () => {
+  it('hides the model cost column when pricing is unavailable', () => {
+    render(
+      <SlotsProvider>
+        <AgentConfigEditors
+          editor="model"
+          spec={{ model: { name: 'openai/gpt' } }}
+          models={[
+            {
+              id: 'openai/gpt',
+              name: 'openai/gpt',
+              provider: { name: 'OpenAI' },
+              properties: { contextLength: 128_000 },
+            },
+          ]}
+          connectors={[]}
+          skills={[]}
+          loading={false}
+          error={null}
+          onChange={vi.fn()}
+          onClose={vi.fn()}
+        />
+      </SlotsProvider>,
+    );
+
+    expect(screen.getByText('Context')).toBeInTheDocument();
+    expect(screen.queryByText('Cost / 1M')).not.toBeInTheDocument();
+  });
+
   it('uses toggles and sliders for model settings', () => {
     const spec: AgentSpec = { model: { name: 'openai/gpt' } };
     const onChange = vi.fn();

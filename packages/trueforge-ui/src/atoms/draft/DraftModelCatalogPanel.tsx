@@ -89,6 +89,12 @@ export function DraftModelCatalogPanel({
       )
     : models;
   const sections = groupModelsByProvider(filtered);
+  const showCosts = filtered.some(
+    model =>
+      model.properties.inputCostPerMillionTokens !== undefined ||
+      model.properties.outputCostPerMillionTokens !== undefined,
+  );
+  const detailedGridClass = showCosts ? 'grid-cols-[minmax(0,1fr)_5rem_7rem]' : 'grid-cols-[minmax(0,1fr)_5rem]';
 
   return (
     <>
@@ -110,10 +116,15 @@ export function DraftModelCatalogPanel({
         </label>
       </div>
       {!showHeading ? (
-        <div className="text-text-secondary grid grid-cols-[minmax(0,1fr)_5rem_7rem] gap-2 border-b border-border px-3 py-2 text-[10px] font-semibold uppercase">
+        <div
+          className={cn(
+            'text-text-secondary grid gap-2 border-b border-border px-3 py-2 text-[10px] font-semibold uppercase',
+            detailedGridClass,
+          )}
+        >
           <span>Model</span>
           <span>Context</span>
-          <span>Cost / 1M</span>
+          {showCosts ? <span>Cost / 1M</span> : null}
         </div>
       ) : null}
       <div
@@ -156,7 +167,7 @@ export function DraftModelCatalogPanel({
                       aria-selected={active}
                       className={cn(
                         'w-full items-center rounded-md px-2 py-2 text-left text-sm',
-                        showHeading ? 'flex' : 'grid grid-cols-[minmax(0,1fr)_5rem_7rem] gap-2',
+                        showHeading ? 'flex' : cn('grid gap-2', detailedGridClass),
                         active
                           ? 'bg-dropdown-selected-item-bg text-dropdown-selected-item-text'
                           : 'hover:bg-ghost-button-hover',
@@ -195,13 +206,15 @@ export function DraftModelCatalogPanel({
                               ? '—'
                               : formatTokens(model.properties.contextLength)}
                           </span>
-                          <span className="text-text-secondary text-xs">
-                            {model.properties.inputCostPerMillionTokens === undefined
-                              ? '—'
-                              : `$${model.properties.inputCostPerMillionTokens}/$${
-                                  model.properties.outputCostPerMillionTokens ?? '–'
-                                }`}
-                          </span>
+                          {showCosts ? (
+                            <span className="text-text-secondary text-xs">
+                              {model.properties.inputCostPerMillionTokens === undefined
+                                ? '—'
+                                : `$${model.properties.inputCostPerMillionTokens}/$${
+                                    model.properties.outputCostPerMillionTokens ?? '–'
+                                  }`}
+                            </span>
+                          ) : null}
                         </>
                       ) : null}
                       {active && showHeading ? <Icon name="check" className="ml-auto size-3.5" /> : null}
