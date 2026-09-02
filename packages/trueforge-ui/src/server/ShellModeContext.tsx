@@ -9,7 +9,11 @@ import {
   withCapabilitiesSandbox,
   writeDraftSpecPreferences,
 } from './draftSpecPreferences.js';
-import { useOptionalRefreshServerCapabilities, useServerCapabilities } from './ServerContext.js';
+import {
+  useOptionalRefreshServerCapabilities,
+  useOptionalScheduleServer,
+  useServerCapabilities,
+} from './ServerContext.js';
 import type { AgentLibraryEntry, AgentSpec } from './types.js';
 
 /** Host-facing shell configuration for agent / library / composer chrome. */
@@ -76,6 +80,8 @@ type ShellModeContextValue = {
   setSessionsOpen: (open: boolean) => void;
   openLibraryAgent: (agentId: string) => void;
   closeLibraryAgent: () => void;
+  schedulesOpen: boolean;
+  setSchedulesOpen: (open: boolean) => void;
   /**
    * Bind from the Agents Library (Try = immutable, Edit = mutable + agentSpec).
    * Prefer this over `selectAgent` / `openDraft` when both fields are available.
@@ -175,6 +181,7 @@ export function ShellModeProvider({
 }) {
   const capabilities = useServerCapabilities();
   const refreshCapabilities = useOptionalRefreshServerCapabilities();
+  const scheduleServer = useOptionalScheduleServer();
   const rememberedSpecRef = useRef<AgentSpec | null>(readDraftSpecPreferences());
   const mutableSeedRef = useRef(rememberedSpecRef.current ?? mutableSeedFromConfig(agentConfig));
   if (
@@ -201,10 +208,13 @@ export function ShellModeProvider({
   const [libraryOpenState, setLibraryOpenState] = useState(false);
   const [sessionsOpenState, setSessionsOpenState] = useState(false);
   const [libraryAgentId, setLibraryAgentId] = useState<string | null>(null);
+  const [schedulesOpenState, setSchedulesOpenState] = useState(false);
   const [historyAgentFilter, setHistoryAgentFilter] = useState<string | null>(null);
   const [pendingSessionId, setPendingSessionId] = useState<string | undefined>(undefined);
   const settingsEnabled = capabilities?.settings?.enabled !== false;
   const settingsOpen = settingsEnabled && settingsOpenState;
+  const schedulesEnabled = scheduleServer != null;
+  const schedulesOpen = schedulesEnabled && schedulesOpenState;
   const libraryOpen = isLibraryEnabled && libraryOpenState;
   const sessionsOpen = sessionsOpenState;
   const setSessionsOpen = useCallback((open: boolean) => {
@@ -213,6 +223,7 @@ export function ShellModeProvider({
       setAgentConfigOpenState(false);
       setLibraryOpenState(false);
       setLibraryAgentId(null);
+      setSchedulesOpenState(false);
     } else {
       replaceSessionShareSearch({ view: null });
     }
@@ -225,6 +236,7 @@ export function ShellModeProvider({
         setSettingsOpenState(false);
         setAgentConfigOpenState(false);
         setSessionsOpen(false);
+        setSchedulesOpenState(false);
       }
       setLibraryAgentId(null);
       setLibraryOpenState(open);
@@ -237,6 +249,7 @@ export function ShellModeProvider({
       setSettingsOpenState(false);
       setAgentConfigOpenState(false);
       setSessionsOpen(false);
+      setSchedulesOpenState(false);
       setLibraryOpenState(true);
       setLibraryAgentId(agentId);
     },
@@ -255,6 +268,7 @@ export function ShellModeProvider({
         setLibraryOpenState(false);
         setLibraryAgentId(null);
         setSessionsOpen(false);
+        setSchedulesOpenState(false);
       }
       setSettingsOpenState(settingsEnabled && open);
     },
@@ -267,10 +281,24 @@ export function ShellModeProvider({
         setLibraryOpenState(false);
         setLibraryAgentId(null);
         setSessionsOpen(false);
+        setSchedulesOpenState(false);
       }
       setAgentConfigOpenState(open);
     },
     [setSessionsOpen],
+  );
+  const setSchedulesOpen = useCallback(
+    (open: boolean) => {
+      if (open) {
+        setSettingsOpenState(false);
+        setAgentConfigOpenState(false);
+        setLibraryOpenState(false);
+        setLibraryAgentId(null);
+        setSessionsOpen(false);
+      }
+      setSchedulesOpenState(schedulesEnabled && open);
+    },
+    [schedulesEnabled, setSessionsOpen],
   );
 
   useEffect(() => {
@@ -278,6 +306,12 @@ export function ShellModeProvider({
       setSettingsOpenState(false);
     }
   }, [settingsEnabled]);
+
+  useEffect(() => {
+    if (!schedulesEnabled) {
+      setSchedulesOpenState(false);
+    }
+  }, [schedulesEnabled]);
 
   const invalidateAgentsList = useCallback(() => {
     setAgentsListEpoch(n => n + 1);
@@ -321,6 +355,7 @@ export function ShellModeProvider({
         setLibraryOpenState(false);
         setLibraryAgentId(null);
         setSessionsOpen(false);
+        setSchedulesOpen(false);
         setPendingSessionId(undefined);
         setMode({
           status: 'active',
@@ -340,6 +375,7 @@ export function ShellModeProvider({
       setLibraryOpenState(false);
       setLibraryAgentId(null);
       setSessionsOpen(false);
+      setSchedulesOpen(false);
       setPendingSessionId(undefined);
       setMode({
         status: 'active',
@@ -350,7 +386,7 @@ export function ShellModeProvider({
       });
       bumpEpoch(false);
     },
-    [isComposerEnabled, isLibraryEnabled, bumpEpoch, setSettingsOpen, setSessionsOpen],
+    [isComposerEnabled, isLibraryEnabled, bumpEpoch, setSettingsOpen, setSessionsOpen, setSchedulesOpen],
   );
 
   const bindMutableAgent = useCallback(
@@ -409,6 +445,7 @@ export function ShellModeProvider({
       setLibraryOpenState(false);
       setLibraryAgentId(null);
       setSessionsOpen(false);
+      setSchedulesOpen(false);
       setPendingSessionId(sessionId);
       const isMutable = isMutableOpt ?? agentName == null;
       if (isMutable) {
@@ -436,7 +473,16 @@ export function ShellModeProvider({
       });
       bumpEpoch(false);
     },
-    [isLibraryEnabled, isComposerEnabled, locked, lockedAgentName, bumpEpoch, setSettingsOpen, setSessionsOpen],
+    [
+      isLibraryEnabled,
+      isComposerEnabled,
+      locked,
+      lockedAgentName,
+      bumpEpoch,
+      setSettingsOpen,
+      setSessionsOpen,
+      setSchedulesOpen,
+    ],
   );
 
   const clearChat = useCallback(() => {
@@ -465,9 +511,10 @@ export function ShellModeProvider({
     setSettingsOpen(false);
     setLibraryOpenState(false);
     setLibraryAgentId(null);
+    setSchedulesOpen(false);
     setMode({ status: 'idle' });
     bumpEpoch(false);
-  }, [isLibraryEnabled, isComposerEnabled, setSettingsOpen, bumpEpoch]);
+  }, [isLibraryEnabled, isComposerEnabled, setSettingsOpen, setSchedulesOpen, bumpEpoch]);
 
   // Mutable remounts are driven only by mutableEpoch (library Edit / New Chat / Clear).
   // Agent id and model must not be in the key — saveAgent binds those onto the same draft.
@@ -500,6 +547,8 @@ export function ShellModeProvider({
       setSessionsOpen,
       openLibraryAgent,
       closeLibraryAgent,
+      schedulesOpen,
+      setSchedulesOpen,
       selectLibraryAgent,
       bindMutableAgent,
       selectAgent,
@@ -534,6 +583,8 @@ export function ShellModeProvider({
       setSessionsOpen,
       openLibraryAgent,
       closeLibraryAgent,
+      schedulesOpen,
+      setSchedulesOpen,
       selectLibraryAgent,
       bindMutableAgent,
       selectAgent,
