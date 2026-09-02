@@ -254,6 +254,7 @@ function createTurnResolver(deps: {
           session_id: sessionId,
           user_ref: userRef,
           repository,
+          signal,
         });
       }
       return buildTurnSandbox({
