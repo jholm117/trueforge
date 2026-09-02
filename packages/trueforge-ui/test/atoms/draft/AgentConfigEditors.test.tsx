@@ -129,6 +129,56 @@ describe('AgentConfigEditors', () => {
     });
   });
 
+  it('clears stale tools and falls back when the active connector is removed', async () => {
+    const githubSpec: AgentSpec = {
+      model: { name: 'openai/gpt' },
+      mcpServers: [{ id: 'github', name: 'GitHub' }],
+    };
+    const slackSpec: AgentSpec = {
+      model: { name: 'openai/gpt' },
+      mcpServers: [{ id: 'slack', name: 'Slack' }],
+    };
+    let resolveSlack: ((tools: Array<{ id: string; name: string; description: string }>) => void) | undefined;
+    const slackTools = new Promise<Array<{ id: string; name: string; description: string }>>(resolve => {
+      resolveSlack = resolve;
+    });
+    const loadMcpTools = vi.fn((connectorId: string) =>
+      connectorId === 'github'
+        ? Promise.resolve([{ id: 'issues.list', name: 'issues.list', description: 'List issues' }])
+        : slackTools,
+    );
+    const renderEditors = (spec: AgentSpec) => (
+      <SlotsProvider>
+        <AgentConfigEditors
+          editor="mcp"
+          spec={spec}
+          models={[]}
+          connectors={[
+            { id: 'github', name: 'GitHub', authenticated: true },
+            { id: 'slack', name: 'Slack', authenticated: true },
+          ]}
+          skills={[]}
+          loading={false}
+          error={null}
+          loadMcpTools={loadMcpTools}
+          onChange={vi.fn()}
+          onClose={vi.fn()}
+        />
+      </SlotsProvider>
+    );
+    const rendered = render(renderEditors(githubSpec));
+
+    expect((await screen.findAllByRole('menuitemcheckbox', { name: /issues.list/ })).length).toBeGreaterThan(0);
+    rendered.rerender(renderEditors(slackSpec));
+
+    await waitFor(() => expect(loadMcpTools).toHaveBeenLastCalledWith('slack'));
+    expect(screen.queryByRole('menuitemcheckbox', { name: /issues.list/ })).not.toBeInTheDocument();
+
+    if (resolveSlack === undefined) throw new Error('expected Slack tools resolver');
+    resolveSlack([{ id: 'messages.list', name: 'messages.list', description: 'List messages' }]);
+    expect((await screen.findAllByRole('menuitemcheckbox', { name: /messages.list/ })).length).toBeGreaterThan(0);
+  });
+
   it('enables sandbox when a skill is added', () => {
     const spec: AgentSpec = { model: { name: 'openai/gpt' } };
     const onChange = vi.fn();

@@ -40,7 +40,16 @@ describe('AgentConfigPanel', () => {
   it('shows supported configuration and omits deferred sections', () => {
     render(
       <SlotsProvider>
-        <AgentConfigPanel spec={spec} model={model} skillsAvailable onChange={vi.fn()} onOpenEditor={vi.fn()} />
+        <AgentConfigPanel
+          spec={spec}
+          model={model}
+          skillsAvailable
+          instructions={spec.instructions ?? ''}
+          onInstructionsChange={vi.fn()}
+          onInstructionsBlur={vi.fn()}
+          onChange={vi.fn()}
+          onOpenEditor={vi.fn()}
+        />
       </SlotsProvider>,
     );
 
@@ -61,10 +70,20 @@ describe('AgentConfigPanel', () => {
 
   it('routes editor actions and live instruction changes', () => {
     const onChange = vi.fn();
+    const onInstructionsChange = vi.fn();
     const onOpenEditor = vi.fn();
     render(
       <SlotsProvider>
-        <AgentConfigPanel spec={spec} model={model} skillsAvailable onChange={onChange} onOpenEditor={onOpenEditor} />
+        <AgentConfigPanel
+          spec={spec}
+          model={model}
+          skillsAvailable
+          instructions={spec.instructions ?? ''}
+          onInstructionsChange={onInstructionsChange}
+          onInstructionsBlur={vi.fn()}
+          onChange={onChange}
+          onOpenEditor={onOpenEditor}
+        />
       </SlotsProvider>,
     );
 
@@ -77,6 +96,6 @@ describe('AgentConfigPanel', () => {
     fireEvent.change(screen.getByPlaceholderText('Enter detailed instructions for your agent…'), {
       target: { value: 'New instructions' },
     });
-    expect(onChange).toHaveBeenCalledWith({ ...spec, instructions: 'New instructions' });
+    expect(onInstructionsChange).toHaveBeenCalledWith('New instructions');
   });
 });

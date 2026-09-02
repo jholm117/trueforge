@@ -49,8 +49,15 @@ export function AgentConfigEditors({
   const [toolsError, setToolsError] = useState<string | null>(null);
   const [toolsRequestEpoch, setToolsRequestEpoch] = useState(0);
   const mounts = editableMountsFromSpec(spec.mcpServers);
+  const activeConnectorStillMounted =
+    activeConnectorId !== null &&
+    connectors.some(
+      connector =>
+        connector.id === activeConnectorId &&
+        mounts.some(mount => mount.id === connector.id || mount.name === connector.name),
+    );
   const selectedConnectorId =
-    activeConnectorId ??
+    (activeConnectorStillMounted ? activeConnectorId : null) ??
     connectors.find(connector => mounts.some(mount => mount.id === connector.id || mount.name === connector.name))
       ?.id ??
     null;
@@ -58,6 +65,7 @@ export function AgentConfigEditors({
   useEffect(() => {
     if (editor !== 'mcp' || selectedConnectorId === null || loadMcpTools === undefined) return;
     let cancelled = false;
+    setTools([]);
     setToolsLoading(true);
     setToolsError(null);
     void loadMcpTools(selectedConnectorId)

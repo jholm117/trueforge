@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import type { AgentConfigEditor } from '../atoms/draft/AgentConfigEditors.js';
 import { useDraftCatalog } from '../atoms/draft/DraftCatalogProvider.js';
+import { useDebouncedAgentInstructions } from '../hooks/useDebouncedAgentInstructions.js';
 import { useOptionalServer, useServerCapabilities } from '../server/ServerContext.js';
 import { useShellMode } from '../server/ShellModeContext.js';
 import type { AgentSpec, McpToolSelection } from '../server/types.js';
@@ -26,6 +27,18 @@ export function AgentConfigDrawerContainer() {
   const AgentConfigEditors = useSlot('AgentConfigEditors');
   const SaveAgentButton = useSlot('SaveAgentButton');
   const [editor, setEditor] = useState<AgentConfigEditor | null>(null);
+  const commitInstructions = useCallback(
+    (instructions: string) => updateAgentSpec?.({ instructions }),
+    [updateAgentSpec],
+  );
+  const {
+    draft: instructionDraft,
+    onChange: onInstructionChange,
+    flush: flushInstructions,
+  } = useDebouncedAgentInstructions({
+    value: agentSpec?.instructions ?? '',
+    onCommit: commitInstructions,
+  });
 
   useEffect(() => {
     if (shell.agentConfigOpen) catalog.ensureLoaded();
@@ -35,21 +48,29 @@ export function AgentConfigDrawerContainer() {
     if (!shell.agentConfigOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        flushInstructions();
         void flushAgentSpec();
         shell.setAgentConfigOpen(false);
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [flushAgentSpec, shell]);
+  }, [flushAgentSpec, flushInstructions, shell]);
 
-  useEffect(() => () => void flushAgentSpec(), [flushAgentSpec]);
+  useEffect(
+    () => () => {
+      flushInstructions();
+      void flushAgentSpec();
+    },
+    [flushAgentSpec, flushInstructions],
+  );
 
   const updateSpec = useCallback(
     (next: AgentSpec) => {
       if (next.skills && next.skills.length > 0 && capabilities?.sandbox.enabled === true) {
         updateAgentSpec?.({
           ...next,
+          instructions: instructionDraft,
           config: {
             ...next.config,
             sandbox: { ...next.config?.sandbox, enabled: true },
@@ -57,9 +78,9 @@ export function AgentConfigDrawerContainer() {
         });
         return;
       }
-      updateAgentSpec?.(next);
+      updateAgentSpec?.({ ...next, instructions: instructionDraft });
     },
-    [capabilities?.sandbox.enabled, updateAgentSpec],
+    [capabilities?.sandbox.enabled, instructionDraft, updateAgentSpec],
   );
 
   const loadMcpTools = useCallback(
@@ -83,6 +104,9 @@ export function AgentConfigDrawerContainer() {
         model={model}
         saveAction={<SaveAgentButton />}
         skillsAvailable={capabilities?.skill.enabled === true}
+        instructions={instructionDraft}
+        onInstructionsChange={onInstructionChange}
+        onInstructionsBlur={flushInstructions}
         onChange={updateSpec}
         onOpenEditor={setEditor}
       />

@@ -17,6 +17,9 @@ export type AgentConfigPanelProps = {
   model?: ModelSelection;
   saveAction?: ReactNode;
   skillsAvailable: boolean;
+  instructions: string;
+  onInstructionsChange: (value: string) => void;
+  onInstructionsBlur: () => void;
   onChange: (spec: AgentSpec) => void;
   onOpenEditor: (editor: AgentConfigEditor) => void;
 };
@@ -64,6 +67,9 @@ export function AgentConfigPanel({
   model,
   saveAction,
   skillsAvailable,
+  instructions,
+  onInstructionsChange,
+  onInstructionsBlur,
   onChange,
   onOpenEditor,
 }: AgentConfigPanelProps) {
@@ -159,11 +165,12 @@ export function AgentConfigPanel({
           </label>
           <textarea
             id={instructionsId}
-            value={spec.instructions ?? ''}
+            value={instructions}
             rows={5}
             placeholder="Enter detailed instructions for your agent…"
             className={auiInputClass('resize-y py-2')}
-            onChange={event => onChange({ ...spec, instructions: event.target.value })}
+            onChange={event => onInstructionsChange(event.target.value)}
+            onBlur={onInstructionsBlur}
           />
         </Section>
 
