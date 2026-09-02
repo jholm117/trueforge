@@ -135,7 +135,9 @@ describe('sandboxProviders router', () => {
   it('GET /catalogs/sandbox-providers returns the shipped catalog verbatim', async () => {
     const response = await catalogRouter.request('/sandbox-providers');
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ data: [...SandboxCatalog.load().list()] });
+    const providers = [...SandboxCatalog.load().list()];
+    expect(await response.json()).toEqual({ data: providers });
+    expect(providers.map(provider => provider.type)).toEqual(['daytona']);
   });
 
   it('GET / returns 404 when none configured', async () => {

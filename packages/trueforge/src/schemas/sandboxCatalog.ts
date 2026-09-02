@@ -3,20 +3,13 @@
  * configured provider manifests in sandboxProvider.ts.
  */
 import { z } from '@hono/zod-openapi';
-import { DaytonaSandboxProviderSchema, ModalSandboxProviderSchema } from './sandboxProvider';
+import { DaytonaSandboxProviderSchema } from './sandboxProvider';
 
-const CatalogDaytonaSandboxProviderSchema = z
+// The settings UI contract currently models Daytona fields only. Keep Modal out
+// of discovery until that canonical contract can represent Modal configuration.
+export const CatalogSandboxProviderSchema = z
   .object(DaytonaSandboxProviderSchema.omit({ auth: true }).shape)
   .strict()
-  .openapi('CatalogDaytonaSandboxProvider');
-
-const CatalogModalSandboxProviderSchema = z
-  .object(ModalSandboxProviderSchema.omit({ auth: true }).shape)
-  .strict()
-  .openapi('CatalogModalSandboxProvider');
-
-export const CatalogSandboxProviderSchema = z
-  .discriminatedUnion('type', [CatalogDaytonaSandboxProviderSchema, CatalogModalSandboxProviderSchema])
   .openapi('CatalogSandboxProvider');
 
 export const SandboxCatalogFileSchema = z
